@@ -1,7 +1,15 @@
-import 'package:http/http.dart';
+import 'dart:convert';
+
+import 'package:ecard_app/client/root_url.dart';
+import 'package:http/http.dart' as http;
 
 class AuthRequests{
-  Future<Response?> login(String path, Object object) async{
-    return null;
+  static Future<http.Response> login(String path, Object object) async{
+    var response = await  http.post(
+      Uri.parse("${BaseUrl.baseEndPoint}/auth/$path"),
+      headers: {"Content-type": "application/json"},
+      body: jsonEncode(object)
+    );
+    return response;
   }
 }

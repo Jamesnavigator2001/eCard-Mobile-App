@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 //ignore_for_file: must_be_immutable
 class HeaderBoldWidget extends StatelessWidget{
 
@@ -73,6 +75,8 @@ class InputField extends StatelessWidget{
   TextEditingController controller;
   String hintText;
   Icon? icon;
+  static bool _obscure = true;
+  static Icon showIcon = Icon(CupertinoIcons.eye_fill);
 
   InputField({
     super.key,
@@ -99,6 +103,32 @@ class InputField extends StatelessWidget{
           prefixIcon: icon
         ),
       );
+  }
+
+  static Widget passwordField(BuildContext context,TextEditingController controller , {String hintText="Password"}){
+    return TextField(
+      controller: controller,
+      obscureText: _obscure,
+        style: GoogleFonts.nunito(
+        textStyle: TextStyle(color: Theme.of(context).primaryColor),
+        fontWeight: FontWeight.w500,
+        backgroundColor: Colors.white,
+        ),
+        decoration: InputDecoration(
+        prefixIcon: Icon(CupertinoIcons.padlock_solid),
+        hintText: "Password",
+        hintStyle: TextStyle(color: Colors.grey),
+        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(30))),
+        suffixIcon: IconButton(onPressed: (){
+          if(_obscure){
+            _obscure = !_obscure;
+            showIcon = Icon(CupertinoIcons.eye_slash_fill);
+          }else{
+            _obscure = _obscure;
+            showIcon = showIcon;
+          }
+        }, icon: _obscure? showIcon : Icon(CupertinoIcons.eye_slash_fill))
+        ));
   }
 }
 

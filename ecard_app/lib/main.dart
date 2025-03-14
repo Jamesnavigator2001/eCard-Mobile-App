@@ -23,6 +23,14 @@ class EcardApp extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.transparent
+      )
+    );
+
     return ChangeNotifierProvider<ThemeNotifier>(
       create: (_)=>ThemeNotifier(isDarkMode),
       child: Consumer<ThemeNotifier>(builder: (context , theme , _){

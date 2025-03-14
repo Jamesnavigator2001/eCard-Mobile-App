@@ -1,13 +1,11 @@
-import 'package:ecard_app/components/alert_reminder.dart';
+
+import 'package:ecard_app/client/auth_requests.dart';
 import 'package:ecard_app/components/custom_widgets.dart';
-import 'package:ecard_app/router/page_router.dart';
 import 'package:ecard_app/utils/raw/model_icons.dart';
 import 'package:ecard_app/utils/resources/images/images.dart';
 import 'package:ecard_app/utils/resources/strings/strings.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class LoginPage extends StatefulWidget{
   const LoginPage({super.key});
@@ -19,8 +17,8 @@ class LoginPage extends StatefulWidget{
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isTextObscured = true;
-  final bool _showLoader = true;
+  bool _isButtonDisabled = false;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -99,71 +97,91 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           InputField(controller: _usernameController , hintText: "username", icon: Icon(Icons.mail)),
                           const SizedBox(height: 20,),
-                          TextField(
-                            obscureText: _isTextObscured,
-                            controller: _passwordController,
-                            cursorColor: Theme.of(context).primaryColor,
-                            style: GoogleFonts.nunito(
-                              textStyle: TextStyle(color: Theme.of(context).primaryColor),
-                              fontWeight: FontWeight.w500,
-                              backgroundColor: Colors.white,
-                            ),
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(CupertinoIcons.padlock_solid),
-                              hintText: "Password",
-                              hintStyle: TextStyle(color: Colors.grey),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(30))),
-                              suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _isTextObscured = !_isTextObscured; // Toggle state
-                                    });
-                                  },
-                                  icon: Icon(_isTextObscured ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye_fill,
-                                  ),
-                              ),)
-                          ),
+                          InputField.passwordField(context, _passwordController),
                           const SizedBox(height: 20,),
                           ElevatedButton(
-                            onPressed: () {
-                              try{
-                                void queryFn() async{
-                                  if(_showLoader){
-                                    showDialog(
-                                        context: context,
-                                        builder: (context)=>ShowCardAlert(image: Images.splashImage, title: Loaders.wait, status: 'true'));
-                                  }
-                                  var response ;
+                              onPressed: _isButtonDisabled
+                                  ? null
+                                  : () async {
+                                setState(() {
+                                  _isLoading = true;
+                                  _isButtonDisabled = true;
+                                });
 
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => PopScope(
+                                    canPop: false,
+                                    child: AlertDialog(
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          LoadingAnimationWidget.stretchedDots(
+                                            color: Theme.of(context).highlightColor,
+                                            size: 24.0,
+                                          ),
+                                          const SizedBox(height: 20),
+                                          NormalHeaderWidget(
+                                            text: "Loading",
+                                            color: Theme.of(context).highlightColor,
+                                            size: "24.0",
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+
+                                try {
+                                  var response = await AuthRequests.login("login", {
+                                    "username": _usernameController.text,
+                                    "password": _passwordController.text
+                                  });
+                                  Navigator.pop(context); // Close dialog before navigation
+                                  if (response.statusCode == 200) {
+                                    Navigator.pushReplacementNamed(context, '/dashboard');
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Login failed: ${response.body}')),
+                                    );
+                                  }
+                                } catch (e) {
+                                  Navigator.pop(context); // Close dialog on error
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: ${e.toString()}')),
+                                  );
+                                } finally {
+                                  if (mounted) {
+                                    setState(() {
+                                      _isLoading = false;
+                                      _isButtonDisabled = false;
+                                    });
+                                  }
                                 }
-                              }catch(e){
-                                if(kDebugMode){
-                                  print('An error occurred');
-                                }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).primaryColor, // Set the background color to green
-                              minimumSize: Size(MediaQuery.of(context).size.width / 4, 48.0), // Set width to half of the screen width and height to 48.0
-                              padding: EdgeInsets.symmetric(vertical: 12.0), // Adjust padding for better appearance
-                            ),
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                                shape: BoxShape.rectangle,
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).primaryColor,
+                                minimumSize: Size(MediaQuery.of(context).size.width / 4, 48.0),
+                                padding: const EdgeInsets.symmetric(vertical: 12.0),
                               ),
-                              child: SizedBox(
-                                height: 30.0,
-                                width: MediaQuery.of(context).size.width / 6, // Reduce width further if needed
-                                child: Center( // Center the child widget
-                                  child: HeaderBoldWidget(
-                                    text: Headlines.login,
-                                    color: Theme.of(context).highlightColor,
-                                    size: '24.0',
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                  shape: BoxShape.rectangle,
+                                ),
+                                child: SizedBox(
+                                  height: 30.0,
+                                  width: MediaQuery.of(context).size.width / 6,
+                                  child: Center(
+                                    child: HeaderBoldWidget(
+                                      text: Texts.login,
+                                      color: Theme.of(context).highlightColor,
+                                      size: '24.0',
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
                           ),
                           Center(
                             child: SizedBox(
@@ -184,7 +202,7 @@ class _LoginPageState extends State<LoginPage> {
                                       child: Text(
                                         "OR",
                                         style: TextStyle(
-                                          color: Colors.grey,
+                                          color: Theme.of(context).primaryColor,
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -250,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     SizedBox(width: 3,),
                     GestureDetector(
-                      child:HeaderBoldWidget(text: Texts.forgotEmail, color: Theme.of(context).primaryColor, size: '14.0'),
+                      child:HeaderBoldWidget(text: Texts.forgotPassword, color: Theme.of(context).primaryColor, size: '14.0'),
                       onTap: (){
                         Navigator.pushNamed(context, '/forgot_password');
                       },
