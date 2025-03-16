@@ -75,9 +75,7 @@ class InputField extends StatelessWidget{
   TextEditingController controller;
   String hintText;
   Icon? icon;
-  static bool _obscure = true;
-  static Icon showIcon = Icon(CupertinoIcons.eye_fill);
-
+  String? _field;
   InputField({
     super.key,
     required this.controller,
@@ -85,10 +83,20 @@ class InputField extends StatelessWidget{
     required this.icon
   });
 
+  String? validateInputField(String? text) {
+    if(text==null || text==""||text.isEmpty){
+      return "";
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return
-      TextField(
+      TextFormField(
+        autofocus: false,
+        onSaved: (value)=>_field = value,
+        validator: validateInputField,
         controller: controller,
         cursorColor: Theme.of(context).primaryColor,
         style: GoogleFonts.nunito(
@@ -104,31 +112,4 @@ class InputField extends StatelessWidget{
         ),
       );
   }
-
-  static Widget passwordField(BuildContext context,TextEditingController controller , {String hintText="Password"}){
-    return TextField(
-      controller: controller,
-      obscureText: _obscure,
-        style: GoogleFonts.nunito(
-        textStyle: TextStyle(color: Theme.of(context).primaryColor),
-        fontWeight: FontWeight.w500,
-        backgroundColor: Colors.white,
-        ),
-        decoration: InputDecoration(
-        prefixIcon: Icon(CupertinoIcons.padlock_solid),
-        hintText: "Password",
-        hintStyle: TextStyle(color: Colors.grey),
-        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(30))),
-        suffixIcon: IconButton(onPressed: (){
-          if(_obscure){
-            _obscure = !_obscure;
-            showIcon = Icon(CupertinoIcons.eye_slash_fill);
-          }else{
-            _obscure = _obscure;
-            showIcon = showIcon;
-          }
-        }, icon: _obscure? showIcon : Icon(CupertinoIcons.eye_slash_fill))
-        ));
-  }
 }
-

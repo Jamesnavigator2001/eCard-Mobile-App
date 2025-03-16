@@ -1,4 +1,11 @@
+import 'package:ecard_app/modals/user_modal.dart';
+import 'package:ecard_app/modals/user_preference.dart';
+import 'package:ecard_app/providers/auth_provider.dart';
+import 'package:ecard_app/providers/user_provider.dart';
 import 'package:ecard_app/router/page_router.dart';
+import 'package:ecard_app/screens/dashboard_screen.dart';
+import 'package:ecard_app/screens/login_screen.dart';
+import 'package:ecard_app/screens/register_screen.dart';
 import 'package:ecard_app/screens/splash_screen.dart';
 import 'package:ecard_app/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -11,39 +18,72 @@ Future<void> main() async{
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp , DeviceOrientation.portraitDown, DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight
   ]);
+  
+  // SystemChrome.setSystemUIOverlayStyle(
+  //     const SystemUiOverlayStyle(
+  //       statusBarColor: Color.fromARGB(255, 0, 132, 112),
+  //       statusBarIconBrightness: Brightness.dark,
+  //       systemNavigationBarColor: Color.fromARGB(255, 0, 132, 112),
+  //       systemNavigationBarIconBrightness: Brightness.dark,
+  //     )
+  // );
 
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   final bool isDarkMode = prefs.getBool("themeMode")?? false;
   runApp(EcardApp(isDarkMode: isDarkMode));
 }
-
-class EcardApp extends StatelessWidget{
+class EcardApp extends StatelessWidget {
   final bool isDarkMode;
-  const EcardApp({super.key , required this.isDarkMode});
+  const EcardApp({super.key, required this.isDarkMode});
+
+  Future<User> getUserData() => UserPreferences().getUser();
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.transparent
-      )
-    );
-
-    return ChangeNotifierProvider<ThemeNotifier>(
-      create: (_)=>ThemeNotifier(isDarkMode),
-      child: Consumer<ThemeNotifier>(builder: (context , theme , _){
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ThemeNotifier>(
+          create: (_) => ThemeNotifier(isDarkMode),
+        ),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: Consumer<ThemeNotifier>(
+        builder: (context, theme, _) {
           return MaterialApp(
-            initialRoute: '/',
-            onGenerateRoute: PageRouter.switchRoute,
             debugShowCheckedModeBanner: false,
             theme: AppThemeController.lightMode,
             darkTheme: AppThemeController.darkMode,
-            home: SplashScreen(),
-            themeMode: theme.isDarkMode ? ThemeMode.light : ThemeMode.dark,
+            themeMode: theme.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            initialRoute: '/',
+            onGenerateRoute: PageRouter.switchRoute,
+            home: FutureBuilder<User>(
+              future: getUserData(),
+              builder: (context, snapshot) {
+                switch (snapshot.connectionState) {
+                  case ConnectionState.none:
+                  case ConnectionState.waiting:
+                    return SplashScreen();
+                  default:
+                    if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    }
+                    if (snapshot.data?.accessToken == null) {
+                      return const LoginPage();
+                    }
+                    UserPreferences().removeUser();
+                    return DashboardPage(user: snapshot.data!);
+                }
+              },
+            ),
+            routes: {
+              // '/dashboard': (context) => const DashboardPage(),
+              '/login': (context) => const LoginPage(),
+              '/register': (context) => const RegisterPage(),
+            },
           );
-      }),
+        },
+      ),
     );
   }
 }

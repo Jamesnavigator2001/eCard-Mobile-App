@@ -1,11 +1,18 @@
+import 'dart:async';
 
-import 'package:ecard_app/client/auth_requests.dart';
 import 'package:ecard_app/components/custom_widgets.dart';
+import 'package:ecard_app/providers/auth_provider.dart';
+import 'package:ecard_app/providers/user_provider.dart';
 import 'package:ecard_app/utils/raw/model_icons.dart';
 import 'package:ecard_app/utils/resources/images/images.dart';
 import 'package:ecard_app/utils/resources/strings/strings.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:provider/provider.dart';
+
+import '../components/alert_reminder.dart';
 
 class LoginPage extends StatefulWidget{
   const LoginPage({super.key});
@@ -17,13 +24,66 @@ class LoginPage extends StatefulWidget{
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isButtonDisabled = false;
-  bool _isLoading = false;
+  String? _password;
+  bool _obscurePassword = true;
+
+  final formKey = GlobalKey<FormState>();
+  void showLoader(){
+    Alerts.show(context, Loaders.loading, LoadingAnimationWidget.stretchedDots(color: Theme.of(context).primaryColor, size: 24.0));
+  }
 
   @override
   Widget build(BuildContext context) {
+    AuthProvider auth = Provider.of<AuthProvider>(context);
+
+    void handleLogin() {
+      final form = formKey.currentState;
+
+      if(_usernameController.text.isEmpty ||_passwordController.text.isEmpty){
+        Alerts.show(context, "Fill in all fields", Image.asset(Images.errorImage, height: 30,width: 30,));
+        Future.delayed(Duration(seconds: 4),(){
+          Navigator.of(context).pop();
+        });
+      }
+
+      if (form == null || !form.validate()) return;
+
+      form.save();
+      showLoader();
+      Timer(Duration(seconds: 5) , (){
+        auth.login(
+          _usernameController.text.trim(),
+          _passwordController.text.trim(),
+        ).then((response) {
+          Navigator.pop(context); // Remove loading
+
+          if (response['status'] == true) {
+            Provider.of<UserProvider>(context, listen: false)
+                .setUser(response['user']);
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response['message'] ?? 'Invalid credentials'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }).catchError((error) {
+          Navigator.pop(context); // Remove loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login error: ${error.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
+      });
+    }
+
     return Scaffold(
-      body: SingleChildScrollView(
+      body:SingleChildScrollView(
         child: SizedBox(
           child: Column(
             children: [
@@ -33,10 +93,10 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.only(bottomRight: Radius.circular(50))
                 ),
                 child: SizedBox(
-                  height: MediaQuery.of(context).size.height/2,
+                  height: MediaQuery.of(context).size.height/2.6,
                   width: double.infinity,
                   child: Padding(
-                      padding: EdgeInsets.only(left: 20.0 , top: 20.0, right: 20.0),
+                      padding: EdgeInsets.only(left: 20.0 , top: 50.0, right: 20.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -77,89 +137,55 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20,),
               Form(
                 autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Theme.of(context).primaryColor),
-                      bottom: BorderSide(color: Theme.of(context).primaryColor),
-                      left: BorderSide(color: Theme.of(context).primaryColor),
-                      right: BorderSide(color: Theme.of(context).primaryColor),
+                key: formKey,
+                child: Padding(padding: EdgeInsets.symmetric(horizontal: 5.0,),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: Theme.of(context).primaryColor),
+                        bottom: BorderSide(color: Theme.of(context).primaryColor),
+                        left: BorderSide(color: Theme.of(context).primaryColor),
+                        right: BorderSide(color: Theme.of(context).primaryColor),
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height/2,
-                    width: double.infinity,
-                    child: Padding(padding: EdgeInsets.only(left: 50 , right:50 ,top: 0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height/2,
+                      width: double.infinity,
+                      child: Padding(padding: EdgeInsets.only(left: 10 , right:10 ,top: 0),
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
                           InputField(controller: _usernameController , hintText: "username", icon: Icon(Icons.mail)),
                           const SizedBox(height: 20,),
-                          InputField.passwordField(context, _passwordController),
+
+                        TextFormField(
+                          onSaved: (value)=>_password = value,
+                          autofocus: false,
+                          controller: _passwordController,
+                          validator: (value)=> value!.isEmpty? "Please Enter password":null,
+                          obscureText: _obscurePassword,
+                          style: GoogleFonts.nunito(
+                            textStyle: TextStyle(color: Theme.of(context).primaryColor),
+                            fontWeight: FontWeight.w500,
+                            backgroundColor: Colors.white,
+                          ),
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(CupertinoIcons.padlock_solid),
+                            hintText: "Password",
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(30)),
+                            ),
+                            suffixIcon: IconButton(
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                            ),
+                          ),
+                        ),
                           const SizedBox(height: 20,),
-                          ElevatedButton(
-                              onPressed: _isButtonDisabled
-                                  ? null
-                                  : () async {
-                                setState(() {
-                                  _isLoading = true;
-                                  _isButtonDisabled = true;
-                                });
-
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (context) => PopScope(
-                                    canPop: false,
-                                    child: AlertDialog(
-                                      content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          LoadingAnimationWidget.stretchedDots(
-                                            color: Theme.of(context).highlightColor,
-                                            size: 24.0,
-                                          ),
-                                          const SizedBox(height: 20),
-                                          NormalHeaderWidget(
-                                            text: "Loading",
-                                            color: Theme.of(context).highlightColor,
-                                            size: "24.0",
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-
-                                try {
-                                  var response = await AuthRequests.login("login", {
-                                    "username": _usernameController.text,
-                                    "password": _passwordController.text
-                                  });
-                                  Navigator.pop(context); // Close dialog before navigation
-                                  if (response.statusCode == 200) {
-                                    Navigator.pushReplacementNamed(context, '/dashboard');
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Login failed: ${response.body}')),
-                                    );
-                                  }
-                                } catch (e) {
-                                  Navigator.pop(context); // Close dialog on error
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Error: ${e.toString()}')),
-                                  );
-                                } finally {
-                                  if (mounted) {
-                                    setState(() {
-                                      _isLoading = false;
-                                      _isButtonDisabled = false;
-                                    });
-                                  }
-                                }
-                              },
+                          ElevatedButton(onPressed: handleLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).primaryColor,
                                 minimumSize: Size(MediaQuery.of(context).size.width / 4, 48.0),
@@ -259,8 +285,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
+              ),),
+              const SizedBox(height: 20,),
               Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,

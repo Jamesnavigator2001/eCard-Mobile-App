@@ -1,8 +1,10 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import '../modals/user_modal.dart';
 
 class DashboardPage extends StatefulWidget{
-  const DashboardPage({super.key});
-
+  final User user;
+  const DashboardPage({super.key , required this.user});
   @override
   State<StatefulWidget> createState() => _DashboardPageState();
 }
@@ -10,8 +12,8 @@ class DashboardPage extends StatefulWidget{
 class _DashboardPageState extends State<DashboardPage>{
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return Scaffold(
+
+    );
   }
-  
 }
