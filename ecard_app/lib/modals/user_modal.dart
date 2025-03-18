@@ -1,23 +1,56 @@
-class User{
-  int? userId;
-  String? username;
-  String? phoneNumber;
-  String? email;
-  String? type;
-  String? accessToken;
-  String? refreshToken;
+class User {
+  final String? id;
+  final String? username;
+  final String? email;
+  final String? accessToken;
+  final String? firstName;
+  final String? userType;
+  final String? lastName;
+  final String? phone;
+  final String? refreshToken;
+  final String? jobTitle;
+  final String? companyName;
 
-  User({this.userId, this.username, this.phoneNumber,this.email, this.type, this.accessToken, this.refreshToken});
+  User({
+    this.id,
+    this.username,
+    this.email,
+    this.accessToken,
+    this.firstName,
+    this.userType,
+    this.refreshToken,
+    this.lastName,
+    this.phone,
+    this.jobTitle,
+    this.companyName,
+  });
 
-  factory User.fromJson(Map<String, dynamic> responseData){
+  factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      userId: responseData['id'],
-      username: responseData['username'],
-      phoneNumber: responseData['phoneNumber'],
-      email : responseData["email"],
-      type: responseData['userType'],
-      accessToken: responseData['accessToken'],
-      refreshToken: responseData['refreshToken']
+      id: json['id']?.toString(), // If present in other responses
+      username: json['username'] ?? '',
+      email: json['email'], // Not present in current response
+      accessToken: json['token'] ?? '',
+      refreshToken: json['refreshToken'] ?? '', // Map to 'token' field
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
+      phone: json['phone'] ?? '',
+      jobTitle: json['jobTitle'] ?? '',
+      companyName: json['companyName'] ?? '',
     );
+  }
+
+  @override
+  String toString() {
+    return 'User{'
+        'id: $id, '
+        'username: $username, '
+        'email: $email, '
+        'accessToken: ${accessToken!.isNotEmpty ? "$accessToken" : "empty"}, '
+        'firstName: $firstName, '
+        'lastName: $lastName, '
+        'phone: $phone, '
+        'jobTitle: $jobTitle, '
+        'companyName: $companyName}';
   }
 }

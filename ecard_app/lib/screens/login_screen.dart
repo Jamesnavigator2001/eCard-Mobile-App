@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:ecard_app/components/custom_widgets.dart';
 import 'package:ecard_app/providers/auth_provider.dart';
 import 'package:ecard_app/providers/user_provider.dart';
@@ -11,14 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
-
 import '../components/alert_reminder.dart';
 
-class LoginPage extends StatefulWidget{
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
   @override
   State<LoginPage> createState() => _LoginPageState();
-
 }
 
 class _LoginPageState extends State<LoginPage> {
@@ -28,8 +25,12 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
 
   final formKey = GlobalKey<FormState>();
-  void showLoader(){
-    Alerts.show(context, Loaders.loading, LoadingAnimationWidget.stretchedDots(color: Theme.of(context).primaryColor, size: 24.0));
+  void showLoader() {
+    Alerts.show(
+        context,
+        Loaders.loading,
+        LoadingAnimationWidget.stretchedDots(
+            color: Theme.of(context).primaryColor, size: 24.0));
   }
 
   @override
@@ -39,26 +40,38 @@ class _LoginPageState extends State<LoginPage> {
     void handleLogin() {
       final form = formKey.currentState;
 
-      if(_usernameController.text.isEmpty ||_passwordController.text.isEmpty){
-        Alerts.show(context, "Fill in all fields", Image.asset(Images.errorImage, height: 30,width: 30,));
-        Future.delayed(Duration(seconds: 4),(){
+      if (_usernameController.text.isEmpty ||
+          _passwordController.text.isEmpty) {
+        Alerts.show(
+            context,
+            "Fill in all fields",
+            Image.asset(
+              Images.errorImage,
+              height: 30,
+              width: 30,
+            ));
+        Future.delayed(Duration(seconds: 2), () {
           Navigator.of(context).pop();
         });
       }
 
-      if (form == null || !form.validate()) return;
+      if (form == null || !form.validate()) {
+        print("Invalid form...==>");
+        return;
+      }
 
       form.save();
       showLoader();
-      Timer(Duration(seconds: 5) , (){
-        auth.login(
+      Timer(Duration(seconds: 2), () {
+        auth
+            .login(
           _usernameController.text.trim(),
           _passwordController.text.trim(),
-        ).then((response) {
-          Navigator.pop(context); // Remove loading
-
+        )
+            .then((response) {
+          Navigator.pop(context);
           if (response['status'] == true) {
-            Provider.of<UserProvider>(context, listen: false)
+            var user = Provider.of<UserProvider>(context, listen: false)
                 .setUser(response['user']);
             Navigator.pushReplacementNamed(context, '/dashboard');
           } else {
@@ -83,20 +96,21 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     return Scaffold(
-      body:SingleChildScrollView(
+      body: SingleChildScrollView(
         child: SizedBox(
           child: Column(
             children: [
               DecoratedBox(
                 decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
-                    borderRadius: BorderRadius.only(bottomRight: Radius.circular(50))
-                ),
+                    borderRadius:
+                        BorderRadius.only(bottomRight: Radius.circular(50))),
                 child: SizedBox(
-                  height: MediaQuery.of(context).size.height/2.6,
+                  height: MediaQuery.of(context).size.height / 2.6,
                   width: double.infinity,
                   child: Padding(
-                      padding: EdgeInsets.only(left: 20.0 , top: 50.0, right: 20.0),
+                      padding:
+                          EdgeInsets.only(left: 20.0, top: 50.0, right: 20.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -105,8 +119,13 @@ class _LoginPageState extends State<LoginPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              HeaderBoldWidget(text: Headlines.loginToAccessAccount, color: Theme.of(context).highlightColor, size: "24.0"),
-                              const SizedBox(width: 100,),
+                              HeaderBoldWidget(
+                                  text: Headlines.loginToAccessAccount,
+                                  color: Theme.of(context).highlightColor,
+                                  size: "24.0"),
+                              const SizedBox(
+                                width: 100,
+                              ),
                               ClipOval(
                                 child: Container(
                                   width: 50,
@@ -116,8 +135,12 @@ class _LoginPageState extends State<LoginPage> {
                                     children: [
                                       Positioned(
                                           left: -10,
-                                          child: Image.asset(Images.splashImage,
-                                            height: 60 , width: 60 , fit: BoxFit.cover,))
+                                          child: Image.asset(
+                                            Images.splashImage,
+                                            height: 60,
+                                            width: 60,
+                                            fit: BoxFit.cover,
+                                          ))
                                     ],
                                   ),
                                 ),
@@ -125,75 +148,103 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                           Padding(
-                            padding: EdgeInsets.only(left: 0.0 , top: 20.0),
-                            child: NormalHeaderWidget(text: Headlines.loginDesc, color: Theme.of(context).highlightColor, size: "18.0"),
+                            padding: EdgeInsets.only(left: 0.0, top: 20.0),
+                            child: NormalHeaderWidget(
+                                text: Headlines.loginDesc,
+                                color: Theme.of(context).highlightColor,
+                                size: "18.0"),
                           ),
                         ],
-                  )
-                  ),
+                      )),
                 ),
               ),
-
-              const SizedBox(height: 20,),
+              const SizedBox(
+                height: 20,
+              ),
               Form(
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 key: formKey,
-                child: Padding(padding: EdgeInsets.symmetric(horizontal: 5.0,),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 5.0,
+                  ),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       border: Border(
                         top: BorderSide(color: Theme.of(context).primaryColor),
-                        bottom: BorderSide(color: Theme.of(context).primaryColor),
+                        bottom:
+                            BorderSide(color: Theme.of(context).primaryColor),
                         left: BorderSide(color: Theme.of(context).primaryColor),
-                        right: BorderSide(color: Theme.of(context).primaryColor),
+                        right:
+                            BorderSide(color: Theme.of(context).primaryColor),
                       ),
                       borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
                     child: SizedBox(
-                      height: MediaQuery.of(context).size.height/2,
+                      height: MediaQuery.of(context).size.height / 2,
                       width: double.infinity,
-                      child: Padding(padding: EdgeInsets.only(left: 10 , right:10 ,top: 0),
-                          child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 10, right: 10, top: 0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                          InputField(controller: _usernameController , hintText: "username", icon: Icon(Icons.mail)),
-                          const SizedBox(height: 20,),
-
-                        TextFormField(
-                          onSaved: (value)=>_password = value,
-                          autofocus: false,
-                          controller: _passwordController,
-                          validator: (value)=> value!.isEmpty? "Please Enter password":null,
-                          obscureText: _obscurePassword,
-                          style: GoogleFonts.nunito(
-                            textStyle: TextStyle(color: Theme.of(context).primaryColor),
-                            fontWeight: FontWeight.w500,
-                            backgroundColor: Colors.white,
-                          ),
-                          decoration: InputDecoration(
-                            prefixIcon: Icon(CupertinoIcons.padlock_solid),
-                            hintText: "Password",
-                            hintStyle: TextStyle(color: Colors.grey),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(30)),
+                            InputField(
+                                controller: _usernameController,
+                                hintText: "username",
+                                icon: Icon(Icons.mail)),
+                            const SizedBox(
+                              height: 20,
                             ),
-                            suffixIcon: IconButton(
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                            TextFormField(
+                              onSaved: (value) => _password = value,
+                              autofocus: false,
+                              controller: _passwordController,
+                              validator: (value) => value!.isEmpty
+                                  ? "Please Enter password"
+                                  : null,
+                              obscureText: _obscurePassword,
+                              style: GoogleFonts.nunito(
+                                textStyle: TextStyle(
+                                    color: Theme.of(context).primaryColor),
+                                fontWeight: FontWeight.w500,
+                                backgroundColor: Colors.white,
+                              ),
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(CupertinoIcons.padlock_solid),
+                                hintText: "Password",
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(30)),
+                                ),
+                                suffixIcon: IconButton(
+                                  onPressed: () => setState(() =>
+                                      _obscurePassword = !_obscurePassword),
+                                  icon: Icon(_obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                          const SizedBox(height: 20,),
-                          ElevatedButton(onPressed: handleLogin,
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            ElevatedButton(
+                              onPressed: handleLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).primaryColor,
-                                minimumSize: Size(MediaQuery.of(context).size.width / 4, 48.0),
-                                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                minimumSize: Size(
+                                    MediaQuery.of(context).size.width / 4,
+                                    48.0),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12.0),
                               ),
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                  color: Theme.of(context)
+                                      .primaryColor
+                                      .withOpacity(0.1),
                                   shape: BoxShape.rectangle,
                                 ),
                                 child: SizedBox(
@@ -208,94 +259,131 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                               ),
-                          ),
-                          Center(
-                            child: SizedBox(
-                              height: 50,
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      height: 1,
-                                      color: Theme.of(context).primaryColor
+                            ),
+                            Center(
+                              child: SizedBox(
+                                height: 50,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                          height: 1,
+                                          color:
+                                              Theme.of(context).primaryColor),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                    child: Container(
-                                      color: Colors.white, // Match background color to "hide" the line behind the text
-                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                      child: Text(
-                                        "OR",
-                                        style: TextStyle(
-                                          color: Theme.of(context).primaryColor,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0),
+                                      child: Container(
+                                        color: Colors
+                                            .white, // Match background color to "hide" the line behind the text
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8.0),
+                                        child: Text(
+                                          "OR",
+                                          style: TextStyle(
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: Container(
-                                      height: 1, // Thickness of the line
-                                      color: Theme.of(context).primaryColor, // Color of the line
+                                    Expanded(
+                                      child: Container(
+                                        height: 1, // Thickness of the line
+                                        color: Theme.of(context)
+                                            .primaryColor, // Color of the line
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              for(int i=0; i<LoginWidgetClickableIcons.icons(context).length; i++)...[
-                                Padding(
-                                  padding: EdgeInsets.only(right: 12.0),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).primaryColor,
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                    child: Padding(padding: const EdgeInsets.all(16.0),
-                                    child: Icon(LoginWidgetClickableIcons.icons(context)[i].icon,size: 18,color: Theme.of(context).highlightColor,),),
-                                  ),
-                                )
-                              ]
-                            ],
-                          ),
-                          const SizedBox(height: 20,),
-                          Center(
-                            child: Row(
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                NormalHeaderWidget(text: Texts.noAccount, color: Theme.of(context).highlightColor, size: '14.0'),
-                                SizedBox(width: 3,),
-                                GestureDetector(
-                                  child:HeaderBoldWidget(text: Texts.register, color: Theme.of(context).primaryColor, size: '14.0'),
-                                  onTap: (){
-                                      Navigator.pushNamed(context, '/register');
-                                  },
-                                )
+                                for (int i = 0;
+                                    i <
+                                        LoginWidgetClickableIcons.icons(context)
+                                            .length;
+                                    i++) ...[
+                                  Padding(
+                                    padding: EdgeInsets.only(right: 12.0),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).primaryColor,
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Icon(
+                                          LoginWidgetClickableIcons.icons(
+                                                  context)[i]
+                                              .icon,
+                                          size: 18,
+                                          color:
+                                              Theme.of(context).highlightColor,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                ]
                               ],
                             ),
-                          ),
-                        ],
-                      ),),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  NormalHeaderWidget(
+                                      text: Texts.noAccount,
+                                      color: Theme.of(context).highlightColor,
+                                      size: '14.0'),
+                                  SizedBox(
+                                    width: 3,
+                                  ),
+                                  GestureDetector(
+                                    child: HeaderBoldWidget(
+                                        text: Texts.register,
+                                        color: Theme.of(context).primaryColor,
+                                        size: '14.0'),
+                                    onTap: () {
+                                      Navigator.pushNamed(context, '/register');
+                                    },
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),),
-              const SizedBox(height: 20,),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
               Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(width: 3,),
+                    SizedBox(
+                      width: 3,
+                    ),
                     GestureDetector(
-                      child:HeaderBoldWidget(text: Texts.forgotPassword, color: Theme.of(context).primaryColor, size: '14.0'),
-                      onTap: (){
+                      child: HeaderBoldWidget(
+                          text: Texts.forgotPassword,
+                          color: Theme.of(context).primaryColor,
+                          size: '14.0'),
+                      onTap: () {
                         Navigator.pushNamed(context, '/forgot_password');
                       },
                     )

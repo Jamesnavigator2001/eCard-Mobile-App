@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'custom_widgets.dart';
 
 class Alerts {
-
-  static Future<dynamic> show(BuildContext context, String message, Widget loader) {
+  static Future<dynamic> show(
+      BuildContext context, String message, Widget loader) {
     return showDialog(
       context: context,
       builder: (context) => PopScope(

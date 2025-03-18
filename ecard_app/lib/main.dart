@@ -5,7 +5,6 @@ import 'package:ecard_app/providers/user_provider.dart';
 import 'package:ecard_app/router/page_router.dart';
 import 'package:ecard_app/screens/dashboard_screen.dart';
 import 'package:ecard_app/screens/login_screen.dart';
-import 'package:ecard_app/screens/register_screen.dart';
 import 'package:ecard_app/screens/splash_screen.dart';
 import 'package:ecard_app/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -13,12 +12,15 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<void> main() async{
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp , DeviceOrientation.portraitDown, DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight
   ]);
-  
+
   // SystemChrome.setSystemUIOverlayStyle(
   //     const SystemUiOverlayStyle(
   //       statusBarColor: Color.fromARGB(255, 0, 132, 112),
@@ -29,14 +31,20 @@ Future<void> main() async{
   // );
 
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  final bool isDarkMode = prefs.getBool("themeMode")?? false;
+  final bool isDarkMode = prefs.getBool("themeMode") ?? false;
   runApp(EcardApp(isDarkMode: isDarkMode));
 }
+
 class EcardApp extends StatelessWidget {
   final bool isDarkMode;
   const EcardApp({super.key, required this.isDarkMode});
 
-  Future<User> getUserData() => UserPreferences().getUser();
+  // Introduce a delay to simulate loading time
+  Future<User> getUserData() async {
+    await Future.delayed(
+        const Duration(seconds: 2)); // Adjust the delay as needed
+    return UserPreferences().getUser();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,24 +71,26 @@ class EcardApp extends StatelessWidget {
                 switch (snapshot.connectionState) {
                   case ConnectionState.none:
                   case ConnectionState.waiting:
-                    return SplashScreen();
-                  default:
+                    return SplashScreen(); // Show SplashScreen while waiting
+                  case ConnectionState.done:
                     if (snapshot.hasError) {
                       return Text('Error: ${snapshot.error}');
                     }
-                    if (snapshot.data?.accessToken == null) {
-                      return const LoginPage();
+                    if (snapshot.hasData &&
+                        snapshot.data!.accessToken == null) {
+                      return const LoginPage(); // User not logged in
                     }
-                    UserPreferences().removeUser();
-                    return DashboardPage(user: snapshot.data!);
+                    if (snapshot.hasData &&
+                        snapshot.data!.accessToken != null) {
+                      return DashboardPage(
+                          user: snapshot.data!); // User logged in
+                    }
+                    return const LoginPage(); // Default to login if no data or token
+                  default:
+                    return SplashScreen();
                 }
               },
             ),
-            routes: {
-              // '/dashboard': (context) => const DashboardPage(),
-              '/login': (context) => const LoginPage(),
-              '/register': (context) => const RegisterPage(),
-            },
           );
         },
       ),
@@ -88,7 +98,7 @@ class EcardApp extends StatelessWidget {
   }
 }
 
-class ThemeNotifier extends ChangeNotifier{
+class ThemeNotifier extends ChangeNotifier {
   bool _isDarkMode;
   ThemeNotifier(this._isDarkMode);
   bool get isDarkMode => _isDarkMode;
